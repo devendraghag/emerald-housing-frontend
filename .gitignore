@@ -1,0 +1,45 @@
+# Installed dependencies and Vue CLI build output
+/node_modules/
+/dist/
+
+# Generated guides, reports, and other task outputs
+/outputs/
+
+# Test coverage and tool caches
+/coverage/
+/.nyc_output/
+/.cache/
+/.eslintcache
+/.stylelintcache
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Local environment settings; keep reusable examples
+.env
+.env.*
+!.env.example
+!.env.*.example
+!.env.template
+
+# Editor-specific files; allow shared VS Code configuration
+.idea/
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+*.suo
+*.user
+*.swp
+*.swo
+*~
+
+# Operating-system files
+.DS_Store
+Thumbs.db
+Desktop.ini

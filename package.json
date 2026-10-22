@@ -1,0 +1,22 @@
+{
+  "name": "emerald-housing-frontend",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "serve": "node --openssl-legacy-provider node_modules/@vue/cli-service/bin/vue-cli-service.js serve",
+    "build": "node --openssl-legacy-provider node_modules/@vue/cli-service/bin/vue-cli-service.js build",
+    "test": "node --test tests/*.test.cjs"
+  },
+  "dependencies": {
+    "axios": "1.7.9",
+    "vue": "3.2.45",
+    "vue-router": "4.1.6",
+    "vuex": "4.1.0"
+  },
+  "devDependencies": {
+    "@vue/cli-service": "4.5.19",
+    "@vue/compiler-sfc": "3.2.45",
+    "sass": "1.77.8",
+    "sass-loader": "10.5.2"
+  }
+}
