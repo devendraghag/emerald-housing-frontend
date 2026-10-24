@@ -140,6 +140,7 @@ export default {
       this.error = "";
       try {
         let data = await api.page(this.type, page, { signal: this.requestController.signal, search: this.query, status: this.statusFilter });
+        if (request !== this.requestRevision) return;
         const validPage = clampPage(data.page, data.totalPages);
         if (data.page !== validPage) data = await api.page(this.type, validPage, { signal: this.requestController.signal, search: this.query, status: this.statusFilter });
         if (request !== this.requestRevision) return;

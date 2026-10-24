@@ -26,7 +26,7 @@ The dist folder contains the production build. Serve it with history fallback to
 - Assign owner, tenant or resident memberships, view history and end memberships.
 - Form validation, backend validation messages, loading, retry and empty states.
 
-The frontend includes admin sign-in, session restoration, session expiry handling and sign-out. It uses Gateway session cookies and fetches CSRF tokens for mutations, including login and logout. Credentials are never stored in browser storage.
+The frontend includes account sign-in, session restoration, session expiry handling and sign-out. It uses Gateway session cookies and fetches CSRF tokens for mutations, including login and logout. Credentials are never stored in browser storage.
 
 For Docker Desktop Kubernetes, keep this running in a backend terminal:
 
@@ -55,7 +55,7 @@ The API contracts come from the existing Java controllers and DTOs. Live end-to-
 
 The workspace adapts to desktop, tablet and phone widths. Desktop uses sidebar navigation; phones use a fixed bottom navigation bar and directory cards. Login includes password visibility, while forms have touch-friendly controls and visible focus states. Animations respect reduced-motion preferences.
 
-The overview loads actual member/flat totals and offers floor selection to view that floor's flats. Member and flat directories support instant search and status filters on the currently loaded page (not a global server search), refresh and pagination. Feature routes load on demand to keep the initial bundle smaller.
+The overview loads actual member/flat totals and offers floor selection to view that floor's flats. Member and flat directories support server-side search and status filters before pagination, refresh and pagination. Feature routes load on demand to keep the initial bundle smaller.
 
 ## JavaScript and Vue patterns
 
@@ -80,10 +80,28 @@ The supplied screenshot reports 0 errors, 0 contrast errors, 24 very-small-text 
 
 All workspace routes declare meta.requiresAuth, while /login uses meta.guestOnly. The global asynchronous beforeEach guard restores the gateway cookie session before allowing access, including when a protected URL is opened directly. Guests are redirected to login with their requested URL preserved; authenticated users are redirected away from login. Redirects are restricted to local paths and checked for encoded external paths and login loops.
 
-Authenticated session checks are cached for up to 60 seconds and revalidated on the next navigation; API 401 responses still trigger immediate session expiry. Nested parent route protection is honored. Reference data is cleared when validation fails or the session expires. Router afterEach updates the page title only after successful navigation.
+Permission-protected navigation revalidates effective account access; other session checks are cached for up to 60 seconds; API 401 responses still trigger immediate session expiry. Nested parent route protection is honored. Reference data is cleared when validation fails or the session expires. Router afterEach updates the page title only after successful navigation.
 
 Run npm.cmd test for integration tests using Vue Router memory history and the real Vuex session module. The backend must still enforce authentication and authorization for every API request.
 
 ## Vue Options API playground
 
 Sign in and open **Vue Options API** in the sidebar or footer (/vue-options). Interactive examples use local state only. See [the feature coverage guide](docs/vue-options-api.md) for examples, source locations, version requirements and context-dependent features.
+
+## Dynamic accounts, roles and family access
+
+The frontend integrates the current backend account and permission model. Navigation and actions use effective permissions from `/api/v1/accounts/me`, including SOCIETY, OWN_FLATS and SELF scopes. A role name never implicitly grants access. The backend enforces every operation.
+
+- **Users**: create accounts, link registered people, assign multiple roles, and enable or disable accounts. Editing uses the backend account version.
+- **Roles**: create custom roles and edit their permission/scope grants and enabled status. Backend system roles remain protected.
+- **Permissions**: list permissions and create or update descriptions. New codes require a supported backend action before they can control a new feature.
+- **Owners & flats**: register a person and owner login together, assign existing registered people, end ownership, and transfer ownership with history retained.
+- **Family details**: owners add, edit and deactivate family details for their current ownership. Family accounts and other users see only their granted scope. Adding a family record does not create a login.
+- **Audit history**: filter people/access or flat events, page through older changes, and inspect before/after details.
+- **My profile**: view the linked registered person and permitted memberships.
+
+The backend's default administrator, flat owner and family roles supply initial workflows. Administrators can add custom roles and combine them on accounts without changing frontend code. Supported permission scopes are constrained to backend business rules. Use **Refresh access** to reload changed grants; navigation also rechecks them. Changed identity or grants clear shared reference data and remount the current workspace. Member/flat updates send ETag/If-Match; account, role and family edits retain backend versions to reject stale writes.
+
+For Option B, run the gateway port-forward shown above, then `npm.cmd run serve`. Application usernames/passwords belong to provisioned accounts, separate from PostgreSQL credentials. No password belongs in frontend environment files or source. The production server must proxy `/api` on the same origin and provide history fallback.
+
+`npm.cmd test` covers scoped access, route denial, identity changes, API request contracts, CSRF, versions and existing UI regressions. `npm.cmd run build` verifies production compilation. The optional `node scripts/verify-live.cjs` runs the actual Vue application in a DOM against localhost:8083 and the running Kubernetes backend. It reads the provisioned administrator secret in memory, creates identifiable synthetic verification data, and writes only a sanitized summary under ignored `outputs/`. Set EMERALD_JSDOM_HOME to an external npm prefix containing jsdom if necessary. This DOM check does not replace visual or manual accessibility review.

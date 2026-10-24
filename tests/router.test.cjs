@@ -12,6 +12,7 @@ function setup(auth, options) {
  router.beforeEach(createAuthGuard(store));
  return {store,router};
 }
+const admin={username:'admin',societyCode:'EMERALD',roles:['ADMIN'],permissions:['MEMBER_VIEW:SOCIETY','MEMBER_CREATE:SOCIETY','MEMBER_UPDATE:SOCIETY','FLAT_VIEW:SOCIETY','FLAT_CREATE:SOCIETY','FLAT_UPDATE:SOCIETY']};
 const guest={current:async()=>{throw {response:{status:401}};}};
 for(const path of ['/', '/members', '/flats', '/members/new', '/flats/new', '/members/7/edit', '/flats/9/edit', '/members/7/memberships', '/unknown', '/vue-options']) {
  test('direct guest access to '+path+' redirects to login',async()=>{
@@ -22,14 +23,15 @@ for(const path of ['/', '/members', '/flats', '/members/new', '/flats/new', '/me
  });
 }
 test('login returns the user to the original protected URL including query',async()=>{
- const {router,store}=setup({...guest,login:async()=>({username:'admin'})});
+ let signedIn=false;
+ const {router,store}=setup({current:async()=>{if(!signedIn)throw {response:{status:401}};return admin;},login:async()=>{signedIn=true;return admin;}});
  await router.push('/members/7/edit?tab=contact');
  await store.dispatch('session/login',{username:'admin',password:'test'});
  await router.replace(safeRedirect(router.currentRoute.value.query.redirect));
  assert.equal(router.currentRoute.value.fullPath,'/members/7/edit?tab=contact');
 });
 test('authenticated visitors leave login and can navigate workspace routes',async()=>{
- const {router}=setup({current:async()=>({username:'admin'})});
+ const {router}=setup({current:async()=>admin});
  await router.push('/login');
  assert.equal(router.currentRoute.value.path,'/');
  await router.push('/flats');
@@ -37,16 +39,16 @@ test('authenticated visitors leave login and can navigate workspace routes',asyn
  await router.push('/vue-options');
  assert.equal(router.currentRoute.value.name,'vue-options');
 });
-test('expired sessions are rechecked on navigation after sixty seconds',async()=>{
+test('permission routes refresh identity on navigation and reject an expired session',async()=>{
  let clock=0,calls=0;
- const {router,store}=setup({current:async()=>{calls++;if(calls>1)throw {response:{status:401}};return {username:'admin'};}},{now:()=>clock});
+ const {router,store}=setup({current:async()=>{calls++;if(calls>2)throw {response:{status:401}};return admin;}},{now:()=>clock});
  await router.push('/members');
  clock=30000;
  await router.push('/flats');
- assert.equal(calls,1);
+ assert.equal(calls,2);
  clock=61000;
  await router.push('/members/new');
- assert.equal(calls,2);
+ assert.equal(calls,3);
  assert.equal(router.currentRoute.value.name,'login');
  assert.equal(store.state.session.user,null);
  assert.deepEqual(store.state.floors,[]);

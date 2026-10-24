@@ -29,4 +29,5 @@ function passwordError(value) {
 function currentOwnership(row,today=new Date().toISOString().slice(0,10)) {
   return !row.end_date && row.start_date<=today;
 }
-module.exports={can,canRead,permits,normalizeIdentity,scopesFor,passwordError,currentOwnership};
+function identityKey(user) { return user?JSON.stringify([user.accountId||user.adminId||user.username,user.memberId,[...(user.permissions||[])].sort(),[...(user.flatIds||[])].sort(),[...(user.roles||[])].sort()]):''; }
+module.exports={can,canRead,permits,normalizeIdentity,scopesFor,passwordError,currentOwnership,identityKey};

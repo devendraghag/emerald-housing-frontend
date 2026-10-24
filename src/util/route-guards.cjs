@@ -18,7 +18,7 @@ function createAuthGuard(store) {
     if (requiresAuth && !authenticated) {
       return { name: 'login', query: { redirect: to.fullPath }, replace: true };
     }
-    if (requiresAuth && authenticated && !permits(store.state.session.user, to.meta)) return { name: 'access-denied', replace: true };
+    if (requiresAuth && authenticated && (!permits(store.state.session.user, to.meta) || (to.matched || []).some(record => !permits(store.state.session.user, record.meta)))) return { name: 'access-denied', replace: true };
     if (to.meta.guestOnly && authenticated) return safeRedirect(to.query.redirect);
     return true;
   };

@@ -1,3 +1,4 @@
+const {identityKey}=require('../util/access.cjs');
 // Factory keeps pending promises private to each store instance.
 function createSessionModule(auth, errorMessage, { now = Date.now, maxAge = 60000 } = {}) {
   let checkedAt = null;
@@ -22,6 +23,7 @@ function createSessionModule(auth, errorMessage, { now = Date.now, maxAge = 6000
           .then(user => {
             if (current === revision) {
               checkedAt = now();
+              if(identityKey(state.user)!==identityKey(user))commit('referenceData',{society:null,floors:[]},{root:true});
               commit('patch', { user, initialized: true });
             }
             return current === revision ? user : null;
@@ -43,6 +45,7 @@ function createSessionModule(auth, errorMessage, { now = Date.now, maxAge = 6000
       async login({ commit }, credentials) {
         const user = await auth.login(credentials.username.trim(), credentials.password);
         revision++;
+        commit('referenceData',{society:null,floors:[]},{root:true});
         checkedAt = now();
         commit('patch', { user, initialized: true, checking: false, error: '' });
         return user;

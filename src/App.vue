@@ -18,7 +18,7 @@
     <StatusMessage :message="$store.state.notice"/><StatusMessage :message="sessionError" error/>
     <div v-if="checkingSession" class="session-loading" role="status"><span class="loading-spinner"></span>Getting your workspace ready...</div>
     <div v-else-if="sessionError&&!user" class="connection-panel"><Icon name="refresh" :size="32"/><h1>Let's reconnect.</h1><p>We couldn't reach your workspace. Check your connection and try again.</p><button class="button" @click="checkSession">Try again <Icon name="refresh" :size="16"/></button></div>
-    <router-view v-else :key="$route.fullPath" @signed-in="signedIn"/>
+    <router-view v-else :key="$route.fullPath+'|'+accessKey" @signed-in="signedIn"/>
    </main>
    <footer class="shell app-footer"><span><span class="footer-dot"></span>Emerald Housing</span><span><router-link v-if="user" to="/vue-options">Vue Options API</router-link><span v-else>Thoughtfully managed. Better together.</span></span></footer>
    <nav v-if="user" class="mobile-nav" aria-label="Mobile navigation"><router-link v-for="item in navigation" :key="item.path" :to="item.path" active-class="selected"><Icon :name="item.icon"/><span>{{ item.title }}</span></router-link><button @click="signOut" :disabled="signingOut"><Icon name="logout"/><span>Sign out</span></button></nav>
@@ -27,12 +27,13 @@
 </template>
 <script>
 import {focusElement,closeDisclosure,closeDisclosureOnBlur} from './util/keyboard.cjs';
-import {safeRedirect} from './util/route-guards.cjs';import {permits} from './util/access.cjs';import access from './util/access-mixin';
+import {safeRedirect} from './util/route-guards.cjs';import {permits,identityKey} from './util/access.cjs';import access from './util/access-mixin';
 import StatusMessage from './components/StatusMessage.vue';import Icon from './components/Icon.vue';import {mapState} from 'vuex';
 export default {
  name:'EmeraldApp',mixins:[access],components:{StatusMessage,Icon},
  computed:{
   ...mapState('session',{user:'user',checkingSession:'checking',signingOut:'signingOut',sessionError:'error'}),
+  accessKey(){return identityKey(this.user);},
   rolesLabel(){return this.user&&this.user.roles?this.user.roles.join(', '):'Society account';},
   navigation(){return [
    ['/', 'Overview','grid',true],['/profile','My profile','people',this.user&&this.user.memberId&&this.canRead('MEMBER_VIEW')],
@@ -47,7 +48,7 @@ export default {
   focusMain(){this.$nextTick(()=>focusElement(this.$refs.main));},closeQuickAddFromKeyboard:closeDisclosure,closeQuickAddOnBlur:closeDisclosureOnBlur,
   closeQuickAdd(event){const menu=event.target.closest('details');if(menu)menu.open=false;},
   async checkSession(){const user=await this.$store.dispatch('session/restore',{force:true});if(user&&this.$route.name==='login')await this.signedIn();},
-  async refreshAccess(){await this.$store.dispatch('session/restore',{force:true});this.$store.commit('referenceData',{society:null,floors:[]});if(!this.user)await this.$router.replace({name:'login'});else if(!permits(this.user,this.$route.meta))await this.$router.replace({name:'access-denied'});else{await this.$router.replace('/');this.$store.commit('notice','Workspace access refreshed.');}},
+  async refreshAccess(){await this.$store.dispatch('session/restore',{force:true});if(!this.user)await this.$router.replace({name:'login'});else if(!permits(this.user,this.$route.meta))await this.$router.replace({name:'access-denied'});else{await this.$router.replace('/');this.$store.commit('notice','Workspace access refreshed.');}},
   async signedIn(){await this.$router.replace(safeRedirect(this.$route.query.redirect));this.focusMain();},
   async sessionExpired(){if(this.expiring)return;this.expiring=true;try{const redirect=this.$route.fullPath;await this.$store.dispatch('session/expire');await this.$router.replace({name:'login',query:{redirect}});this.$store.commit('notice','Your session expired. Please sign in again.');this.$nextTick(()=>focusElement(document.getElementById('username')));}finally{this.expiring=false;}},
   async signOut(){if(this.signingOut)return;try{await this.$store.dispatch('session/logout');await this.$router.replace({name:'login'});this.$store.commit('notice','');this.$nextTick(()=>focusElement(document.getElementById('username')));}catch{/* Session errors are shown for retry. */}}

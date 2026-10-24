@@ -16,7 +16,7 @@
             label="Full name"
             v-model="form.fullName"
             required
-            maxlength="120"
+            maxlength="160"
             autocomplete="name" /><Input
             :disabled="!canSave"
             name="mobileNumber"
@@ -131,7 +131,7 @@ export default {
     }
   },
     async save() {
-      if (this.busy) return;
+      if (this.busy || !this.canSave) return;
       this.busy = true;
       this.error = "";
       this.success = "";
@@ -153,7 +153,7 @@ export default {
       }
     },
     async deactivate() {
-      if (!this.confirmDeactivate || this.busy) return;
+      if (!this.confirmDeactivate || this.busy || this.readonly || !this.can(this.prefix+'_DEACTIVATE')) return;
       this.busy = true;
       this.error = "";
       try {

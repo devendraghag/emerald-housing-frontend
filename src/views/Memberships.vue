@@ -146,14 +146,14 @@ export default {
   props: { id: String },
   components: { Input, StatusMessage, Pagination },
   data: () => ({
-    today: localDate(),
+    today: new Date().toISOString().slice(0,10),
     member: null,
     flats: [],
     memberships: [],
     membershipPage: 0,
-    form: { flatId: "", relationshipType: "OWNER", startDate: localDate() },
+    form: { flatId: "", relationshipType: "OWNER", startDate: new Date().toISOString().slice(0,10) },
     ending: null,
-    endDate: localDate(),
+    endDate: new Date().toISOString().slice(0,10),
     loading: false,
     busy: false,
     ready: false,
@@ -204,7 +204,7 @@ export default {
       }
     },
     async assign() {
-      if (this.busy) return;
+      if (this.busy || !this.can('OWNER_REGISTER')) return;
       this.busy = true;
       this.error = "";
       this.success = "";
@@ -220,7 +220,7 @@ export default {
       }
     },
     async end() {
-      if (this.busy) return;
+      if (this.busy || !this.can('OWNER_END_OWNERSHIP')) return;
       this.busy = true;
       this.error = "";
       this.success = "";
