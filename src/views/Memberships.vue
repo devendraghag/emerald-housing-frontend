@@ -39,7 +39,7 @@
               </td>
               <td class="data-table-cell" data-label="Action">
                 <button
-                  v-if="!item.endDate"
+                  v-if="!item.endDate && can('OWNER_END_OWNERSHIP')"
                   class="link-button"
                   :disabled="busy"
                   type="button"
@@ -76,7 +76,7 @@
         </div>
       </form>
       <form
-        v-if="member.status === 'ACTIVE'"
+        v-if="member.status === 'ACTIVE' && can('OWNER_REGISTER')"
         class="panel form-page"
         @submit.prevent="assign"
       >
@@ -133,6 +133,7 @@
   </div>
 </template>
 <script>
+import access from '../util/access-mixin';
 import { focusElement } from "../util/keyboard.cjs";
 import { api, errorMessage } from "../services/api";
 import { localDate } from "../util/contracts.cjs";
@@ -141,6 +142,7 @@ import { pageItems, pageCount, clampPage } from "../util/pagination.cjs";
 import Input from "../components/forms/Input.vue";
 import StatusMessage from "../components/StatusMessage.vue";
 export default {
+  mixins: [access],
   props: { id: String },
   components: { Input, StatusMessage, Pagination },
   data: () => ({
@@ -190,7 +192,7 @@ export default {
       try {
         [this.member, this.flats, this.memberships] = await Promise.all([
           api.get("members", this.id),
-          api.all("flats"),
+          this.canRead("FLAT_VIEW") ? api.all("flats") : Promise.resolve([]),
           api.memberships(this.id),
         ]);
         this.membershipPage = clampPage(this.membershipPage, this.membershipPages);

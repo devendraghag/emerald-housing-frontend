@@ -1,0 +1,1 @@
+<template><section class="panel"><span class="page-kicker">Your workspace access</span><h1 class="page-title">Access restricted</h1><p>Your current permissions do not allow this page. Contact your society administrator if your access needs to change.</p><router-link class="button" to="/">Back to overview</router-link></section></template>
