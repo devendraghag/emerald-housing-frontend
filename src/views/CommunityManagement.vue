@@ -124,7 +124,7 @@ export default {
     }
     if(this.area==='audit')rows=await api.audit({service:this.auditService,entityType:this.entityType,entityId:this.entityId,before:this.before});
     if(revision!==this.revision)return;this.rows=rows;this.more=this.paged&&rows.length===10;
-    if(['owners','family'].includes(this.area)&&this.canRead('FLAT_VIEW'))await Promise.all([...new Set(rows.map(r=>r.flat_id))].map(async id=>{try{const f=await api.get('flats',id);if(revision===this.revision)this.flatNames[id]=f.flatNumber;}catch{/* No extra data is exposed when flat reads are restricted. */}}));
+    if(['owners','family'].includes(this.area)&&this.canRead('FLAT_VIEW'))await Promise.all([...new Set(rows.map(r=>r.flat_id))].map(async id=>{try{const f=await api.flatLabel(id);if(revision===this.revision)this.flatNames[id]=f.flatNumber;}catch{/* No extra data is exposed when flat reads are restricted. */}}));
    }catch(e){if(revision===this.revision)this.error=errorMessage(e);}finally{if(revision===this.revision)this.loading=false;}
   },
   next(){if(this.area==='audit'){this.auditStack.push(this.before);this.before=this.rows[this.rows.length-1].sequence;}this.page++;this.load();},

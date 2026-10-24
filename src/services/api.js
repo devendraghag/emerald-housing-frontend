@@ -12,7 +12,16 @@ http.interceptors.request.use(async config=>{
 const data=response=>response.data;
 const record=response=>({...response.data,_etag:response.headers.etag});
 const conditional=etag=>etag?{headers:{'If-Match':etag}}:{};
-export const api={
+// Coalesce labels requested by several owner pickers and serialize them to
+// respect the Gateway bulkhead. Results are never cached across identities.
+const flatLabelRequests=new Map();let flatLabelQueue=Promise.resolve();
+function flatLabel(id){
+  if(flatLabelRequests.has(id))return flatLabelRequests.get(id);
+  const pending=flatLabelQueue.then(()=>http.get(`/flats/${id}`).then(record));
+  flatLabelQueue=pending.catch(()=>{});flatLabelRequests.set(id,pending);
+  pending.then(()=>flatLabelRequests.delete(id),()=>flatLabelRequests.delete(id));return pending;
+}
+export const api={flatLabel,
   society:()=>http.get('/society').then(data),floors:()=>http.get('/floors').then(data),
   page:(type,page=0,{signal,search,status,floorNumber,size=PAGE_SIZE}={})=>http.get(`/${type}/page`,{params:{page,size,search:search||undefined,status:status||undefined,floorNumber:floorNumber||undefined},signal}).then(data),
   flatsByFloor:(number,{signal}={})=>http.get(`/flats/by-floor/${number}`,{signal}).then(data),

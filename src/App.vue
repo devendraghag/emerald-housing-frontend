@@ -18,7 +18,7 @@
     <StatusMessage :message="$store.state.notice"/><StatusMessage :message="sessionError" error/>
     <div v-if="checkingSession" class="session-loading" role="status"><span class="loading-spinner"></span>Getting your workspace ready...</div>
     <div v-else-if="sessionError&&!user" class="connection-panel"><Icon name="refresh" :size="32"/><h1>Let's reconnect.</h1><p>We couldn't reach your workspace. Check your connection and try again.</p><button class="button" @click="checkSession">Try again <Icon name="refresh" :size="16"/></button></div>
-    <router-view v-else :key="$route.fullPath+'|'+accessKey" @signed-in="signedIn"/>
+    <router-view v-else :key="$route.fullPath+($route.name==='login'?'':'|'+accessKey)" @signed-in="signedIn"/>
    </main>
    <footer class="shell app-footer"><span><span class="footer-dot"></span>Emerald Housing</span><span><router-link v-if="user" to="/vue-options">Vue Options API</router-link><span v-else>Thoughtfully managed. Better together.</span></span></footer>
    <nav v-if="user" class="mobile-nav" aria-label="Mobile navigation"><router-link v-for="item in navigation" :key="item.path" :to="item.path" active-class="selected"><Icon :name="item.icon"/><span>{{ item.title }}</span></router-link><button @click="signOut" :disabled="signingOut"><Icon name="logout"/><span>Sign out</span></button></nav>

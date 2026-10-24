@@ -20,7 +20,7 @@ export default {
  created(){if(!this.disabled)this.load();},beforeUnmount(){clearTimeout(this.timer);if(this.controller)this.controller.abort();},
  watch:{search(){clearTimeout(this.timer);this.timer=setTimeout(()=>{this.page=0;this.load();},300);},modelValue(){this.resolveSelection();},disabled(value){if(!value&&!this.rows.length)this.load();}},
  methods:{
-  current:currentOwnership,key(row){return row.memberId||row.flatId||row.id;},
+  current(row){return this.resource==='owners'?currentOwnership(row):row.status==='ACTIVE';},key(row){return row.memberId||row.flatId||row.id;},
   text(row){if(this.resource==='members')return row.fullName+' · '+row.mobileNumber;if(this.resource==='flats')return row.flatNumber+' · Floor '+row.floorNumber;return row.full_name+' · '+(this.flatNames[row.flat_id]||'Registered flat')+(row.end_date?' · Ended':'');},
   choose(event){const value=event.target.value,row=this.rows.find(r=>this.key(r)===value);if(row)this.selectedLabel=this.text(row);this.$emit('update:modelValue',value);this.$emit('selected',row||null);},
   changePage(page){this.page=page;this.load();},
@@ -30,7 +30,7 @@ export default {
    try{
     const result=this.resource==='owners'?await api.owners({page:this.page,size:10,signal:controller.signal}):await api.page(this.resource,this.page,{size:10,search:this.search,signal:controller.signal,status:this.currentOnly?'ACTIVE':undefined});
     if(controller.signal.aborted)return;this.rows=Array.isArray(result)?result:result.content;this.more=Array.isArray(result)?result.length===10:this.page+1<result.totalPages;
-    if(this.resource==='owners')await Promise.all([...new Set(this.rows.map(r=>r.flat_id))].map(async id=>{try{const flat=await api.get('flats',id,{signal:controller.signal});this.flatNames[id]=flat.flatNumber;}catch{/* Choice remains usable when flat details are restricted. */}}));
+    if(this.resource==='owners')await Promise.all([...new Set(this.rows.map(r=>r.flat_id))].map(async id=>{try{const flat=await api.flatLabel(id);this.flatNames[id]=flat.flatNumber;}catch{/* Choice remains usable when flat details are restricted. */}}));
     if(!controller.signal.aborted)await this.resolveSelection();
    }catch(error){if(error.code!=='ERR_CANCELED')this.error=errorMessage(error);}finally{if(this.controller===controller)this.loading=false;}
   }
