@@ -73,7 +73,7 @@
             Deactivate {{ singular }}
           </button>
         </section>
-        <p v-else-if="id" class="body-text">Status: {{ status }}</p>
+        <section v-else-if="id && status !== 'ACTIVE' && type === 'flats' && !readonly && can('FLAT_ACTIVATE')" class="danger-area"><h2 class="section-title">Reactivate flat</h2><p class="body-text">This makes the flat available for new assignments.</p><label class="field-label"><input type="checkbox" v-model="confirmActivate"/> I confirm that this flat should be reactivated.</label><button type="button" class="button" :disabled="!confirmActivate || busy" @click="activate">Reactivate flat</button></section><p v-else-if="id" class="body-text">Status: {{ status }}</p>
       </fieldset>
     </form>
   </div>
@@ -103,6 +103,7 @@ export default {
     success: "",
     status: "",
     confirmDeactivate: false,
+    confirmActivate: false,
   }),
   computed: {
     prefix() { return this.type === "members" ? "MEMBER" : "FLAT"; },
@@ -151,6 +152,12 @@ export default {
       } finally {
         this.busy = false;
       }
+    },
+    async activate() {
+      if (!this.confirmActivate || this.busy || this.readonly || this.type !== 'flats' || !this.can('FLAT_ACTIVATE')) return;
+      this.busy = true; this.error = ''; this.success = '';
+      try { const record = await api.activate(this.type, this.id, this.form._etag); this.status = record.status; this.form._etag = record._etag; this.success = 'Flat reactivated successfully.'; }
+      catch (e) { this.error = errorMessage(e); } finally { this.busy = false; }
     },
     async deactivate() {
       if (!this.confirmDeactivate || this.busy || this.readonly || !this.can(this.prefix+'_DEACTIVATE')) return;

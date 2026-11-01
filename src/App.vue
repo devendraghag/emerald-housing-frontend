@@ -38,7 +38,7 @@ export default {
   navigation(){return [
    ['/', 'Overview','grid',true],['/profile','My profile','people',this.user&&this.user.memberId&&this.canRead('MEMBER_VIEW')],
    ['/members','Members','people',this.canRead('MEMBER_VIEW')],['/flats','Flats','building',this.canRead('FLAT_VIEW')],
-   ['/family','Family','people',this.canRead('FAMILY_VIEW')],['/owners','Owners & flats','home',this.canRead('MEMBER_VIEW')],
+   ['/family','Family','people',this.canRead('FAMILY_VIEW')],['/owners','Owners & flats','home',this.canRead('MEMBER_VIEW')],['/building','Society & floors','layers',this.can('SOCIETY_VIEW')],['/account-security','Account security','shield',true],['/rental','Rent & operations','home',['RENT_VIEW','RENT_MANAGE','MAINTENANCE_VIEW','MAINTENANCE_CREATE','LEASE_VIEW','LEASE_MANAGE','VIEWING_VIEW','VIEWING_BOOK','VIEWING_MANAGE'].some(p=>this.can(p)||this.can(p,'OWN_FLATS'))],
    ['/users','Users','people',this.can('USER_VIEW')],['/roles','Roles','shield',this.can('ROLE_VIEW')],
    ['/permissions','Permissions','layers',this.can('PERMISSION_VIEW')],['/audit','Audit history','clock',this.can('AUDIT_VIEW')]
   ].filter(item=>item[3]).map(([path,title,icon])=>({path,title,icon}));}

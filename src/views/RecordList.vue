@@ -57,7 +57,7 @@
                 >
               </td>
               <td class="data-table-cell actions" data-label="Actions">
-                <router-link v-if="can(prefix+'_UPDATE') || can(prefix+'_DEACTIVATE')" :to="`/${type}/${record[idKey]}/edit`"
+                <router-link v-if="can(prefix+'_UPDATE') || can(prefix+'_DEACTIVATE') || can(prefix+'_ACTIVATE')" :to="`/${type}/${record[idKey]}/edit`"
                   >Edit<span class="sr-only">
                     {{ record.fullName || record.flatNumber }}</span
                   ></router-link

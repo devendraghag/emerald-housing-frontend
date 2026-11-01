@@ -4,6 +4,9 @@ import { createAuthGuard } from "../util/route-guards.cjs";
 import { createRoutes } from "./routes.cjs";
 import Home from "../views/Home.vue";
 const CommunityManagement = () => import('../views/CommunityManagement.vue');
+const RentalManagement = () => import('../views/RentalManagement.vue');
+const SocietyManagement = () => import('../views/SocietyManagement.vue');
+const AccountSecurity = () => import('../views/AccountSecurity.vue');
 const Profile = () => import('../views/Profile.vue');
 const Forbidden = () => import('../views/Forbidden.vue');
 const Login = () => import("../views/Login.vue");
@@ -15,7 +18,7 @@ const NotFound = () => import("../views/NotFound.vue");
 const router = createRouter({
   history: createWebHistory(),
   scrollBehavior: () => ({ top: 0 }),
-  routes: createRoutes({ Home, Login, RecordList, RecordForm, Memberships, NotFound, OptionsPlayground, CommunityManagement, Profile, Forbidden }),
+  routes: createRoutes({ Home, Login, RecordList, RecordForm, Memberships, NotFound, OptionsPlayground, CommunityManagement, RentalManagement, SocietyManagement, AccountSecurity, Profile, Forbidden }),
 });
 router.beforeEach(createAuthGuard(store));
 router.afterEach((to, from, failure) => {
