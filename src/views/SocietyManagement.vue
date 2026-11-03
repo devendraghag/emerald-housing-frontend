@@ -4,8 +4,8 @@
   <p class="lead">Maintain the society name and the floor numbers used by the flat directory.</p><StatusMessage :message="error" error :retry="!busy" @retry="load"/><StatusMessage :message="success"/>
   <p v-if="loading" role="status">Loading society setup...</p>
   <template v-else-if="society">
-   <section class="panel"><div class="section-heading"><div><h2 class="section-title">{{ society.societyName }}</h2><p class="muted">{{ society.societyId }} · {{ society.totalFloors }} floors</p></div></div><form v-if="can('SOCIETY_UPDATE')" class="rental-inline-form" @submit.prevent="saveSociety"><Input name="societyName" label="Society name" v-model="societyName" maxlength="200" required/><button class="button" :disabled="busy">Save society name</button></form></section>
-   <section class="panel"><div class="section-heading"><div><h2 class="section-title">Floors</h2><p class="muted">Floor numbers must be unique within Emerald.</p></div></div><form v-if="can('FLOOR_CREATE')" class="rental-inline-form" @submit.prevent="addFloor"><Input name="newFloorNumber" label="New floor number" v-model="newFloorNumber" type="number" min="1" max="99" step="1" required/><button class="button" :disabled="busy">Add floor</button></form><div class="table-wrap"><table v-if="floors.length" class="data-table"><thead><tr><th>Current floor</th><th v-if="can('FLOOR_UPDATE')">Change number</th><th v-if="can('FLOOR_UPDATE')">Action</th></tr></thead><tbody><tr v-for="floor in floors" :key="floor.floorNumber"><td>Floor {{ floor.floorNumber }}</td><td v-if="can('FLOOR_UPDATE')"><Input :name="'floor-'+floor.floorNumber" :label="'New number for floor '+floor.floorNumber" v-model="floorChanges[floor.floorNumber]" type="number" min="1" max="99" step="1"/></td><td v-if="can('FLOOR_UPDATE')"><button class="link-button" :disabled="busy" @click="saveFloor(floor)">Save</button></td></tr></tbody></table><p v-else class="empty">No floors are configured.</p></div></section>
+   <section class="panel"><div class="section-heading"><div><h2 class="section-title">{{ society.societyName }}</h2><p class="muted">{{ society.societyId }} · {{ society.totalFloors }} floors</p></div></div><form v-if="can('SOCIETY_UPDATE')" class="building-inline-form" @submit.prevent="saveSociety"><Input name="societyName" label="Society name" v-model="societyName" maxlength="200" required/><button class="button" :disabled="busy">Save society name</button></form></section>
+   <section class="panel"><div class="section-heading"><div><h2 class="section-title">Floors</h2><p class="muted">Floor numbers must be unique within Emerald.</p></div></div><form v-if="can('FLOOR_CREATE')" class="building-inline-form" @submit.prevent="addFloor"><Input name="newFloorNumber" label="New floor number" v-model="newFloorNumber" type="number" min="1" max="99" step="1" required/><button class="button" :disabled="busy">Add floor</button></form><div class="table-wrap"><table v-if="floors.length" class="data-table"><thead><tr><th class="data-table-heading">Current floor</th><th v-if="can('FLOOR_UPDATE')" class="data-table-heading">Change number</th><th v-if="can('FLOOR_UPDATE')" class="data-table-heading">Action</th></tr></thead><tbody><tr v-for="floor in floors" :key="floor.floorNumber"><td class="data-table-cell" data-label="Current floor">Floor {{ floor.floorNumber }}</td><td v-if="can('FLOOR_UPDATE')" class="data-table-cell" data-label=""><div class="floor-number-input"><Input :name="'floor-'+floor.floorNumber" :label="'New number for floor '+floor.floorNumber" v-model="floorChanges[floor.floorNumber]" type="number" min="1" max="99" step="1"/></div></td><td v-if="can('FLOOR_UPDATE')" class="data-table-cell floor-actions" data-label="Action"><button type="button" class="button button-secondary button-small" :disabled="busy" @click="saveFloor(floor)">Save</button></td></tr></tbody></table><p v-else class="empty">No floors are configured.</p></div></section>
   </template>
  </section>
 </template>
@@ -13,3 +13,42 @@
 import access from '../util/access-mixin';import Input from '../components/forms/Input.vue';import StatusMessage from '../components/StatusMessage.vue';import {api,errorMessage} from '../services/api';
 export default {mixins:[access],components:{Input,StatusMessage},data:()=>({society:null,societyName:'',floors:[],floorChanges:{},newFloorNumber:'',loading:false,busy:false,error:'',success:''}),created(){this.load()},methods:{async load(){this.loading=true;this.error='';try{const [society,floors]=await Promise.all([api.society(),api.floors()]);this.society=society;this.societyName=society.societyName;this.floors=floors;this.floorChanges=Object.fromEntries(floors.map(f=>[f.floorNumber,String(f.floorNumber)]))}catch(e){this.error=errorMessage(e)}finally{this.loading=false}},async mutate(action,message){if(this.busy)return;this.busy=true;this.error='';this.success='';try{await action();await this.load();this.success=message}catch(e){this.error=errorMessage(e)}finally{this.busy=false}},async saveSociety(){await this.mutate(()=>api.updateSociety(this.societyName.trim()),'Society name updated.')},async addFloor(){const n=Number(this.newFloorNumber);if(!Number.isInteger(n)||n<1||n>99){this.error='Enter a floor number from 1 to 99.';return}await this.mutate(async()=>{await api.createFloor(n);this.newFloorNumber=''},'Floor added.')},async saveFloor(floor){const next=Number(this.floorChanges[floor.floorNumber]);if(!Number.isInteger(next)||next<1||next>99){this.error='Enter a floor number from 1 to 99.';return}await this.mutate(()=>api.updateFloor(floor.floorNumber,next),'Floor number updated.')}}};
 </script>
+
+<style scoped>
+.management-page .building-inline-form {
+  display: flex;
+  align-items: flex-end;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin: 14px 0 18px;
+}
+.management-page .building-inline-form :deep(.field) {
+  flex: 1 1 280px;
+  min-width: 220px;
+  margin: 0;
+}
+.management-page .building-inline-form > .button {
+  flex: 0 0 auto;
+  min-width: 132px;
+}
+.management-page .floor-number-input :deep(.field) {
+  min-width: 0;
+  margin: 0;
+}
+.management-page .floor-number-input :deep(.text-input) {
+  box-sizing: border-box;
+  width: 100%;
+}
+.management-page .floor-actions {
+  white-space: nowrap;
+}
+@media (max-width: 700px) {
+  .management-page .building-inline-form :deep(.field) {
+    flex-basis: 100%;
+    min-width: 0;
+  }
+  .management-page .building-inline-form > .button {
+    width: 100%;
+  }
+}
+</style>

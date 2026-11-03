@@ -1,7 +1,8 @@
 <template>
  <div class="field record-lookup">
   <label class="field-label field-label-strong" :for="name">{{ label }}{{ required ? ' (required)' : '' }}</label>
-  <input v-if="resource!=='owners' && !disabled" class="text-input lookup-search" type="search" v-model="search" :aria-label="'Search '+label" placeholder="Search by name or number"/>
+  <input v-if="!disabled" class="text-input lookup-search" type="search" v-model="search" :aria-label="'Search '+label" placeholder="Search by name or number"/>
+  <p v-if="currentOnly" class="field-hint">Only current, active records can be selected.</p>
   <select :id="name" :name="name" class="select-input" :value="modelValue || ''" :required="required" :disabled="disabled || loading" @change="choose">
    <option value="">{{ required?'Choose a record':'None' }}</option>
    <option v-if="modelValue && !rows.some(r=>key(r)===modelValue)" :value="modelValue">{{ selectedLabel || 'Current selection' }}</option>
@@ -28,7 +29,7 @@ export default {
   async load(){
    if(this.disabled)return;if(this.controller)this.controller.abort();const controller=new AbortController();this.controller=controller;this.loading=true;this.error='';
    try{
-    const result=this.resource==='owners'?await api.owners({page:this.page,size:10,signal:controller.signal}):await api.page(this.resource,this.page,{size:10,search:this.search,signal:controller.signal,status:this.currentOnly?'ACTIVE':undefined});
+    const result=this.resource==='owners'?await api.owners({page:this.page,size:10,search:this.search,status:this.currentOnly?'CURRENT':undefined,signal:controller.signal}):await api.page(this.resource,this.page,{size:10,search:this.search,signal:controller.signal,status:this.currentOnly?'ACTIVE':undefined});
     if(controller.signal.aborted)return;this.rows=Array.isArray(result)?result:result.content;this.more=Array.isArray(result)?result.length===10:this.page+1<result.totalPages;
     if(this.resource==='owners')await Promise.all([...new Set(this.rows.map(r=>r.flat_id))].map(async id=>{try{const flat=await api.flatLabel(id);this.flatNames[id]=flat.flatNumber;}catch{/* Choice remains usable when flat details are restricted. */}}));
     if(!controller.signal.aborted)await this.resolveSelection();

@@ -76,6 +76,32 @@
         <section v-else-if="id && status !== 'ACTIVE' && type === 'flats' && !readonly && can('FLAT_ACTIVATE')" class="danger-area"><h2 class="section-title">Reactivate flat</h2><p class="body-text">This makes the flat available for new assignments.</p><label class="field-label"><input type="checkbox" v-model="confirmActivate"/> I confirm that this flat should be reactivated.</label><button type="button" class="button" :disabled="!confirmActivate || busy" @click="activate">Reactivate flat</button></section><p v-else-if="id" class="body-text">Status: {{ status }}</p>
       </fieldset>
     </form>
+    <section v-if="id && type === 'flats' && readonly && canRead('MEMBER_VIEW')" class="panel flat-membership-panel" aria-labelledby="flat-memberships-title">
+      <div class="section-heading">
+        <div>
+          <h2 id="flat-memberships-title" class="section-title">Flat memberships</h2>
+          <p class="muted">People linked to this flat, including past memberships.</p>
+        </div>
+        <button type="button" class="button button-secondary button-small" :disabled="membershipLoading" @click="loadMemberships">Refresh</button>
+      </div>
+      <p v-if="membershipLoading" role="status" class="body-text">Loading memberships...</p>
+      <StatusMessage :message="membershipError" error retry @retry="loadMemberships" />
+      <div v-if="!membershipLoading && !membershipError && memberships.length" class="table-wrap">
+        <table class="data-table">
+          <caption class="sr-only">Memberships for flat {{ form.flatNumber }}</caption>
+          <thead><tr><th class="data-table-heading">Member</th><th class="data-table-heading">Relationship</th><th class="data-table-heading">From</th><th class="data-table-heading">To</th></tr></thead>
+          <tbody>
+            <tr v-for="membership in memberships" :key="membership.membershipId">
+              <td class="data-table-cell" data-label="Member">{{ membershipNames[membership.memberId] || membership.memberId }}</td>
+              <td class="data-table-cell" data-label="Relationship">{{ membership.relationshipType }}</td>
+              <td class="data-table-cell" data-label="From">{{ formatMembershipDate(membership.startDate) }}</td>
+              <td class="data-table-cell" data-label="To">{{ membership.endDate ? formatMembershipDate(membership.endDate) : 'Current' }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <p v-else-if="!membershipLoading && !membershipError" class="body-text">No flat memberships yet.</p>
+    </section>
   </div>
 </template>
 <script>
@@ -102,6 +128,10 @@ export default {
     error: "",
     success: "",
     status: "",
+    memberships: [],
+    membershipNames: {},
+    membershipLoading: false,
+    membershipError: "",
     confirmDeactivate: false,
     confirmActivate: false,
   }),
@@ -125,12 +155,52 @@ export default {
         this.status = data.status;
       }
       this.ready = true;
+      if (this.type === "flats" && this.readonly && this.canRead("MEMBER_VIEW")) this.loadMemberships();
     } catch (e) {
       this.error = errorMessage(e);
     } finally {
       this.loading = false;
     }
   },
+    formatMembershipDate(value) {
+      if (!value) return '';
+      const raw = String(value);
+      const dateOnly = /^\d{4}-\d{2}-\d{2}$/.test(raw);
+      const instant = new Date(dateOnly ? `${raw}T00:00:00+05:30` : raw);
+      if (Number.isNaN(instant.getTime())) return raw;
+      const date = new Intl.DateTimeFormat('en-GB', {
+        timeZone: 'Asia/Kolkata', day: '2-digit', month: 'short', year: 'numeric',
+      }).format(instant);
+      if (dateOnly) return date;
+      const time = new Intl.DateTimeFormat('en-GB', {
+        timeZone: 'Asia/Kolkata', hour: '2-digit', minute: '2-digit', second: '2-digit', hourCycle: 'h23',
+      }).format(instant);
+      return `${date} , ${time} IST`.replace(' , ', ', ');
+    },
+    async loadMemberships() {
+      if (!this.id || this.type !== "flats" || !this.canRead("MEMBER_VIEW")) return;
+      this.membershipLoading = true;
+      this.membershipError = "";
+      try {
+        const memberships = await api.membershipsByFlat(this.id);
+        this.memberships = memberships;
+        const names = {};
+        for (const memberId of new Set(memberships.map((item) => item.memberId).filter(Boolean))) {
+          try {
+            const member = await api.get("members", memberId);
+            names[memberId] = member.fullName || memberId;
+          } catch {
+            names[memberId] = memberId;
+          }
+        }
+        this.membershipNames = names;
+      } catch (error) {
+        this.memberships = [];
+        this.membershipError = errorMessage(error);
+      } finally {
+        this.membershipLoading = false;
+      }
+    },
     async save() {
       if (this.busy || !this.canSave) return;
       this.busy = true;

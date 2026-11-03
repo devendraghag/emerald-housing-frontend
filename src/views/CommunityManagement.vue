@@ -24,8 +24,8 @@
 
   <section v-if="selectedEvent" class="panel audit-detail"><div class="section-heading"><h2 class="section-title">{{ selectedEvent.action }} · {{ selectedEvent.entity_type }}</h2><button class="link-button" @click="selectedEvent=null">Close details</button></div><p>By {{ selectedEvent.actor_name }} at {{ date(selectedEvent.occurred_at) }}</p><p class="muted">Record: {{ selectedEvent.entity_id }}</p><h3>Before</h3><pre>{{ pretty(selectedEvent.before_state) }}</pre><h3>After</h3><pre>{{ pretty(selectedEvent.after_state) }}</pre></section>
 
-  <section v-if="editor" class="panel management-editor" ref="editor" tabindex="-1">
-   <h2 class="section-title">{{ editing?'Edit '+singular:area==='owners'?'Register a flat owner':'Add '+singular }}</h2>
+  <section v-if="editor" class="panel management-editor" :class="{'family-editor':area==='family'}" ref="editor" tabindex="-1">
+   <h2 class="section-title">{{ editing?'Edit '+singular:area==='owners'?'Register a flat owner':area==='family'?'Add family member':'Add '+singular }}</h2>
    <form :aria-busy="busy" @submit.prevent="save"><fieldset class="plain-fieldset" :disabled="busy"><legend class="sr-only">{{ singular }} details</legend>
     <template v-if="area==='users'">
      <Input name="accountUsername" label="Username" v-model="draft.username" required maxlength="120" :readonly="!!editing" autocomplete="off"/>
@@ -52,13 +52,13 @@
      <Input name="ownerPassword" label="Initial owner password" hint="14–72 UTF-8 bytes." v-model="draft.password" type="password" required autocomplete="new-password"/>
     </template>
     <template v-if="area==='family'">
-     <RecordLookup v-model="draft.ownerMembershipId" resource="owners" name="familyOwnership" label="Registered owner and flat" required current-only :disabled="!!editing"/>
-     <Input name="familyFullName" label="Family member name" v-model="draft.fullName" required maxlength="160"/>
-     <Input name="familyRelationship" label="Relationship to owner" hint="For example: spouse, child, or parent." v-model="draft.relationship" required maxlength="40"/>
-     <Input name="familyMobile" label="Mobile number (optional)" v-model="draft.mobileNumber" type="tel" maxlength="20"/>
-     <Input name="familyEmail" label="Email (optional)" v-model="draft.email" type="email" maxlength="254"/>
-     <RecordLookup v-if="can('USER_UPDATE')" v-model="draft.linkedMemberId" resource="members" name="familyPerson" label="Linked registered person (optional)"/>
-     <p class="field-hint">Adding family details does not create a login account. An administrator can link a registered person and provide a separate family login.</p>
+     <div class="family-form-intro"><span class="family-form-eyebrow">HOUSEHOLD PROFILE</span><p>Choose a current flat owner, then add the family member's details. This keeps each record attached to the right home.</p></div>
+     <div class="family-form-grid">
+      <section class="family-form-section"><p class="family-step">STEP 1</p><h3>Choose the home</h3><p class="family-section-copy">Search by owner name or mobile number. Only current ownerships are available.</p><RecordLookup v-model="draft.ownerMembershipId" resource="owners" name="familyOwnership" label="Registered owner and flat" required current-only :disabled="!!editing"/></section>
+      <section class="family-form-section"><p class="family-step">STEP 2</p><h3>Family member details</h3><Input name="familyFullName" label="Full name" hint="Enter the name as it should appear in society records." v-model="draft.fullName" required maxlength="160" autocomplete="name"/><Input name="familyRelationship" label="Relationship to owner" hint="For example: spouse, child, parent, or sibling." v-model="draft.relationship" placeholder="e.g., Spouse" required maxlength="40"/><div class="family-contact-grid"><Input name="familyMobile" label="Mobile number (optional)" hint="At least 7 digits." v-model="draft.mobileNumber" type="tel" pattern="[+]?[0-9][0-9 ()-]{5,19}" maxlength="20" autocomplete="tel"/><Input name="familyEmail" label="Email (optional)" v-model="draft.email" type="email" maxlength="254" autocomplete="email"/></div></section>
+     </div>
+     <section v-if="can('USER_UPDATE')" class="family-identity-link"><h3>Link a registered person (optional)</h3><p>Use this only when the family member already has a registered person record and needs that identity linked.</p><RecordLookup v-model="draft.linkedMemberId" resource="members" name="familyPerson" label="Registered person"/></section>
+     <p class="family-form-note"><strong>Login access is separate.</strong> Adding a family record does not create an account. An administrator can set up a login and permissions separately.</p>
     </template>
     <div class="button-row"><button class="button" type="submit">{{ busy?'Saving...':'Save '+singular }}</button><button type="button" class="button button-secondary" @click="closeEditor">Cancel</button></div>
    </fieldset></form>
@@ -108,8 +108,16 @@ export default {
  created(){this.load();},
  methods:{
   scopes:scopesFor,date(value){return value?new Date(value).toLocaleString():'—';},pretty(value){if(!value)return 'No previous value';try{return JSON.stringify(typeof value==='string'?JSON.parse(value):value,null,2);}catch{return String(value);}},
+  ownerDate(value){
+   if(!value)return '—';const raw=String(value);const dateOnly=/^\d{4}-\d{2}-\d{2}$/.test(raw);
+   const instant=new Date(dateOnly?`${raw}T00:00:00+05:30`:raw);if(Number.isNaN(instant.getTime()))return raw;
+   const date=new Intl.DateTimeFormat('en-GB',{timeZone:'Asia/Kolkata',day:'2-digit',month:'short',year:'numeric'}).format(instant);
+   if(dateOnly)return date;
+   const time=new Intl.DateTimeFormat('en-GB',{timeZone:'Asia/Kolkata',hour:'2-digit',minute:'2-digit',second:'2-digit',hourCycle:'h23'}).format(instant);
+   return `${date}, ${time} IST`;
+  },
   scopeLabel(scope){return {SOCIETY:'Whole society',OWN_FLATS:'Own flats',SELF:'Own record'}[scope];},rowKey(row){return row.id||row.accountId||row.code||row.sequence;},
-  cell(row,key){if(key==='flat_id')return this.flatNames[row.flat_id]||'Flat details restricted';if(key==='roles')return row.roles.join(', ');if(key==='grants')return row.grants.map(g=>g.permission+' · '+this.scopeLabel(g.scope)).join('; ');if(key==='enabled')return row.enabled?'Enabled':'Disabled';if(key==='active')return row.active?'Active':'Inactive';if(key==='occurred_at')return this.date(row[key]);if(key==='end_date')return row[key]||'Current';return row[key]||'—';},
+  cell(row,key){if(key==='flat_id')return this.flatNames[row.flat_id]||'Flat details restricted';if(key==='roles')return row.roles.join(', ');if(key==='grants')return row.grants.map(g=>g.permission+' · '+this.scopeLabel(g.scope)).join('; ');if(key==='enabled')return row.enabled?'Enabled':'Disabled';if(key==='active')return row.active?'Active':'Inactive';if(key==='occurred_at')return this.date(row[key]);if(key==='start_date'||key==='end_date')return row[key]?this.ownerDate(row[key]):key==='end_date'?'Current':'—';return row[key]||'—';},
   familyAllowed(permission,row){return this.can(permission)||(this.can(permission,'OWN_FLATS')&&(row?this.ownMembershipIds.includes(row.owner_membership_id):this.ownMembershipIds.length>0));},
   canEdit(row){if(this.area==='users')return row.accountId!==this.currentUser.accountId&&this.can('USER_UPDATE')&&this.can('USER_ASSIGN_ROLE')&&this.can('ROLE_VIEW');if(this.area==='roles')return !row.system_role&&this.can('ROLE_UPDATE')&&this.can('ROLE_ASSIGN_PERMISSION')&&this.can('PERMISSION_VIEW');if(this.area==='permissions')return this.can('PERMISSION_MANAGE');if(this.area==='family')return row.active&&this.familyAllowed('FAMILY_UPDATE',row);return false;},
   async load(){
@@ -161,3 +169,21 @@ export default {
  }
 };
 </script>
+
+<style scoped>
+.family-editor { max-width: 980px; margin-inline: auto; }
+.family-editor form { max-width: none; }
+.family-form-intro { margin: 8px 0 22px; padding: 20px 22px; border-radius: 14px; background: #f4f3eb; }
+.family-form-eyebrow,.family-step { color: #8b745c; font-size: 11px; font-weight: 750; letter-spacing: .12em; margin: 0 0 8px; }
+.family-form-intro p,.family-section-copy,.family-identity-link p { color: #71685e; font-size: 13px; line-height: 1.65; margin: 0; }
+.family-form-grid { display: grid; grid-template-columns: minmax(250px,.85fr) minmax(0,1.3fr); gap: 18px; }
+.family-form-section { min-width: 0; padding: 20px; border: 1px solid var(--border); border-radius: 14px; background: #fff; }
+.family-form-section h3,.family-identity-link h3 { margin: 0 0 8px; color: var(--ink); font-size: 17px; }
+.family-form-section .field { margin-top: 18px; margin-bottom: 16px; }
+.family-form-section .field:last-child { margin-bottom: 0; }
+.family-contact-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.family-identity-link { margin-top: 18px; padding: 18px 20px; border: 1px solid var(--border); border-radius: 14px; background: #fbfaf8; }
+.family-identity-link .field { margin: 16px 0 0; }
+.family-form-note { margin: 18px 0 0; padding: 14px 16px; border-left: 3px solid #bba98a; background: #faf8f1; color: #625a4d; font-size: 12px; line-height: 1.6; }
+@media(max-width:760px) { .family-form-grid,.family-contact-grid { grid-template-columns: 1fr; } .family-form-section { padding: 17px; } }
+</style>
