@@ -5,8 +5,8 @@
   <p class="lead">{{ description }}</p>
   <StatusMessage :message="error" error :retry="!busy" @retry="load"/><StatusMessage :message="success"/>
   <form v-if="area==='audit'" class="audit-filters" @submit.prevent="resetAudit">
-   <label class="field">Service<select v-model="auditService" class="select-input" @change="resetAudit"><option value="members">People, accounts and access</option><option value="society">Flats</option></select></label>
-   <label class="field">Record type<select v-model="entityType" class="select-input"><option value="">All types</option><option v-for="type in auditTypes" :key="type">{{ type }}</option></select></label>
+   <label class="field">Service<small class="field-hint">Choose which service to include in the audit.</small><select v-model="auditService" class="select-input" @change="resetAudit"><option value="members">People, accounts and access</option><option value="society">Flats</option></select></label>
+   <label class="field">Record type<small class="field-hint">Choose a record type, or leave All types selected.</small><select v-model="entityType" class="select-input"><option value="">All types</option><option v-for="type in auditTypes" :key="type">{{ type }}</option></select></label>
    <Input name="auditEntityId" label="Record ID (optional)" v-model="entityId" placeholder="Record UUID"/><button class="button" :disabled="loading">Apply filters</button>
   </form>
   <p v-if="loading" class="body-text" role="status">Loading {{ title.toLowerCase() }}...</p>
@@ -31,14 +31,14 @@
      <Input name="accountUsername" label="Username" v-model="draft.username" required maxlength="120" :readonly="!!editing" autocomplete="off"/>
      <Input v-if="!editing" name="accountPassword" label="Initial password" hint="14–72 UTF-8 bytes." v-model="draft.password" type="password" required autocomplete="new-password"/>
      <RecordLookup v-model="draft.memberId" resource="members" name="accountPerson" label="Linked registered person"/>
-     <label class="field">Roles (use Ctrl or Command to select several)<select class="select-input roles-select" v-model="draft.roles" multiple required><option v-for="role in enabledRoles" :key="role.code" :value="role.code">{{ role.code }} — {{ role.description }}</option></select></label>
+     <label class="field">Roles (use Ctrl or Command to select several)<small class="field-hint">Select one or more roles for this user.</small><select class="select-input roles-select" v-model="draft.roles" multiple required><option v-for="role in enabledRoles" :key="role.code" :value="role.code">{{ role.code }} — {{ role.description }}</option></select></label>
      <label v-if="editing" class="check-field"><input type="checkbox" v-model="draft.enabled"/> Account enabled</label>
     </template>
     <template v-if="area==='roles' || area==='permissions'">
      <Input name="accessCode" :label="area==='roles'?'Role code':'Permission code'" hint="Uppercase letters, digits and underscores; start with a letter." v-model="draft.code" :readonly="!!editing" :pattern="area==='roles'?'[A-Z][A-Z0-9_]{1,31}':'[A-Z][A-Z0-9_]{1,63}'" :maxlength="area==='roles'?32:64" required/>
      <Input name="accessDescription" label="Description" v-model="draft.description" maxlength="200" required/>
      <template v-if="area==='roles'"><label class="check-field"><input type="checkbox" v-model="draft.enabled"/> Role enabled</label><h3 class="section-title">Permissions and scope</h3><p>Choose the actions this role allows and which records they apply to.</p>
-      <div class="grant-list"><div v-for="permission in permissionChoices" :key="permission.code" class="grant-row"><label class="check-field"><input type="checkbox" v-model="grants[permission.code].enabled"/> <span>{{ permission.code }}<small>{{ permission.description }}</small></span></label><select class="select-input" :disabled="!grants[permission.code].enabled" v-model="grants[permission.code].scope" :aria-label="permission.code+' access scope'"><option v-for="scope in scopes(permission.code)" :key="scope" :value="scope">{{ scopeLabel(scope) }}</option></select></div></div>
+      <div class="grant-list"><div v-for="permission in permissionChoices" :key="permission.code" class="grant-row"><label class="check-field"><input type="checkbox" v-model="grants[permission.code].enabled"/> <span>{{ permission.code }}<small>{{ permission.description }}</small></span></label><small class="field-hint">Choose the access scope for this permission.</small><select class="select-input" :disabled="!grants[permission.code].enabled" v-model="grants[permission.code].scope" :aria-label="permission.code+' access scope'"><option v-for="scope in scopes(permission.code)" :key="scope" :value="scope">{{ scopeLabel(scope) }}</option></select></div></div>
      </template>
      <p v-else class="field-hint">A new permission code alone does not add a feature. Assign permissions for supported actions through Roles.</p>
     </template>
@@ -134,7 +134,7 @@ export default {
     }
     if(this.area==='audit')rows=await api.audit({service:this.auditService,entityType:this.entityType,entityId:this.entityId,before:this.before});
     if(revision!==this.revision)return;this.rows=rows;this.more=this.paged&&rows.length===10;
-    if(['owners','family'].includes(this.area)&&this.canRead('FLAT_VIEW'))await Promise.all([...new Set(rows.map(r=>r.flat_id))].map(async id=>{try{const f=await api.flatLabel(id);if(revision===this.revision)this.flatNames[id]=f.flatNumber;}catch{/* No extra data is exposed when flat reads are restricted. */}}));
+    if(['owners','family'].includes(this.area)&&this.canRead('FLAT_VIEW'))await Promise.all([...new Set(rows.map(r=>r.flat_id))].filter(id=>id&&!this.flatNames[id]).map(async id=>{try{const f=await api.flatLabel(id);if(revision===this.revision)this.flatNames[id]=f.flatNumber;}catch{/* No extra data is exposed when flat reads are restricted. */}}));
    }catch(e){if(revision===this.revision)this.error=errorMessage(e);}finally{if(revision===this.revision)this.loading=false;}
   },
   next(){if(this.area==='audit'){this.auditStack.push(this.before);this.before=this.rows[this.rows.length-1].sequence;}this.page++;this.load();},
@@ -171,7 +171,7 @@ export default {
 </script>
 
 <style scoped>
-.family-editor { max-width: 980px; margin-inline: auto; }
+.family-editor { max-width: 1280px; margin-inline: auto; }
 .family-editor form { max-width: none; }
 .family-form-intro { margin: 8px 0 22px; padding: 20px 22px; border-radius: 14px; background: #f4f3eb; }
 .family-form-eyebrow,.family-step { color: #8b745c; font-size: 11px; font-weight: 750; letter-spacing: .12em; margin: 0 0 8px; }

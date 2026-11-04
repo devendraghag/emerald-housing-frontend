@@ -8,7 +8,7 @@
       >
     </div>
     <p class="lead directory-intro">{{ type === 'members' ? 'A familiar face for every home. Keep your people connected.' : 'Every home has a place. Keep your flat directory in order.' }}</p>
-    <div class="directory-toolbar"><div class="search-field"><Icon name="search" :size="19" /><input ref="search" v-model="query" type="search" :aria-label="'Search all permitted ' + type" :placeholder="'Search all permitted ' + type + '...'" /><button v-if="query" type="button" class="clear-search" aria-label="Clear search" @click="clearSearch">&times;</button></div><select v-model="statusFilter" class="select-input status-select" aria-label="Filter status"><option value="">All statuses</option><option value="ACTIVE">Active</option><option value="INACTIVE">Inactive</option></select><button class="button button-secondary" :disabled="loading" @click="load(page)" aria-label="Refresh directory"><Icon name="refresh" :class="{ spinning: loading }" :size="18" /><span class="refresh-label">Refresh</span></button></div>
+    <div class="directory-toolbar"><div class="search-field"><Icon name="search" :size="19" /><input ref="search" v-model="query" type="search" :aria-label="'Search all permitted ' + type" :placeholder="'Search all permitted ' + type + '...'" /><button v-if="query" type="button" class="clear-search" aria-label="Clear search" @click="clearSearch">&times;</button></div><label class="status-filter-field"><span class="sr-only">Filter status</span><small id="directory-status-hint" class="field-hint">Filter by status; choose All statuses to show every record.</small><select v-model="statusFilter" class="select-input status-select" aria-label="Filter status" aria-describedby="directory-status-hint"><option value="">All statuses</option><option value="ACTIVE">Active</option><option value="INACTIVE">Inactive</option></select></label><button class="button button-secondary" :disabled="loading" @click="load(page)" aria-label="Refresh directory"><Icon name="refresh" :class="{ spinning: loading }" :size="18" /><span class="refresh-label">Refresh</span></button></div>
     <StatusMessage :message="error" error retry @retry="load(page)" />
     <div v-if="loading" class="skeleton-lines directory-skeleton" role="status"><span v-for="n in 4" :key="n"></span><span class="sr-only">Loading {{ type }}...</span></div>
     <template v-else-if="!error"
@@ -157,3 +157,5 @@ export default {
   },
 };
 </script>
+
+<style scoped>.status-filter-field{display:grid;gap:4px;flex:0 0 148px;min-width:128px}.status-filter-field .field-hint{margin:0}@media(max-width:700px){.status-filter-field{flex:1;max-width:none;order:1}}</style>

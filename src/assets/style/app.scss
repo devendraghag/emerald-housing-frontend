@@ -55,6 +55,52 @@
 button,a,input,select,summary{scroll-margin-block:90px}
 @media(max-width:700px){.main-content{padding-bottom:100px}}
 
+/* Keep workspace controls and navigation usable on narrow phone screens. */
+@media(max-width:700px){
+ .topbar{height:auto;min-height:65px;flex-wrap:wrap;gap:8px;padding:12px 20px}
+ .breadcrumb{width:100%;overflow:hidden;white-space:nowrap}
+ .topbar-actions{width:100%;justify-content:flex-start;flex-wrap:wrap;gap:8px}
+ .mobile-nav{justify-content:flex-start;gap:4px;overflow-x:auto;overscroll-behavior-x:contain;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+ .mobile-nav::-webkit-scrollbar{display:none}
+ .mobile-nav a,.mobile-nav button{flex:0 0 72px;width:72px;max-width:none;padding:6px 2px;font-size:12px;line-height:1.2}
+ .mobile-nav a span,.mobile-nav button span{text-align:center;overflow-wrap:anywhere}
+ .page-heading{align-items:flex-start;flex-wrap:wrap}
+ .directory-summary{flex-wrap:wrap}
+}
+
+/* Shared visual finish across workspace pages, directories, and forms. */
+body{background:radial-gradient(ellipse at 78% 0%,#e7f0e4 0,transparent 34%),var(--bg)}
+.workspace-main{background:transparent}
+.topbar{background:#ffffffd9;backdrop-filter:blur(14px);border-bottom-color:#e2e9e1}
+.breadcrumb strong{color:#234b3b;font-weight:650}
+.main-content{padding-top:38px}
+.page-kicker{display:inline-flex;align-items:center;gap:8px;width:fit-content;padding:6px 10px;border:1px solid #dce8dc;border-radius:999px;background:#edf4e9;color:#456650;font-size:12px;letter-spacing:1.2px}
+.page-kicker:before{width:6px;height:6px;border-radius:50%;background:#6f986b;content:""}
+.page-title{color:#193b32;font-weight:620;letter-spacing:-1.5px}
+.section-title{color:#204535;font-weight:650}
+.button{border-radius:11px;box-shadow:0 3px 8px #183d290d;transition:background .18s,box-shadow .18s,transform .18s}
+.button:hover{transform:translateY(-1px);box-shadow:0 7px 15px #183d291c}
+.button-secondary{background:linear-gradient(180deg,#fff,#f8faf7);border-color:#dce6dc}
+.panel,.form-page>form,.society-section,.quick-actions-panel{border-color:#e0e9df;border-radius:20px;box-shadow:0 12px 32px #1f432b0a}
+.page-heading,.dashboard-heading{margin-bottom:24px}
+.directory-toolbar{padding:13px;border:1px solid #e1e9e0;border-radius:15px;background:linear-gradient(145deg,#fff,#f9fbf8);box-shadow:0 6px 18px #1e422d08}
+.search-field,.status-select{border-color:#dce7dc;border-radius:11px;background:#fff}
+.table-wrap{border-color:#e0e9df;border-radius:16px;box-shadow:0 8px 24px #1e422d09}
+.data-table-heading{background:#f0f5ed;color:#516d58}
+.data-table-cell{border-top-color:#edf1eb}
+.data-table tbody tr:hover{background:#f8fbf6}
+.form-page>form,.panel{padding:30px}
+.text-input,.select-input{border-color:#d9e4d8;border-radius:11px;background:#fbfdf9}
+.text-input:focus,.select-input:focus,.search-field:focus-within{border-color:#6c9872;box-shadow:0 0 0 4px #e5f0e2}
+.empty{border-color:#d7e4d5;border-radius:18px;background:linear-gradient(145deg,#fff,#f8fbf6)}
+.app-footer{margin-top:10px;border-top-color:#e0e9df;color:#718276}
+@media(max-width:700px){
+ .main-content{padding-top:27px}
+ .page-kicker{font-size:12px}
+ .form-page>form,.panel{padding:22px 18px;border-radius:16px}
+ .directory-toolbar{padding:10px}
+}
+
 /* Keyboard focus: a dark outline with a white separator works on both
    filled controls and pale surfaces, without changing their layout. */
 :root{--focus-separator:#fff}
@@ -215,3 +261,20 @@ a{color:var(--primary)}
  .refresh-button{font-size:12px;gap:8px;width:auto;min-width:44px;margin-top:0}
  .brand-subtitle{letter-spacing:.8px}
 }
+
+/* Use wide screens well while keeping form content readable. */
+.shell{max-width:1760px}
+.form-page{max-width:1080px}
+.family-editor{max-width:1240px}
+.profile-page{max-width:1280px}
+@media(min-width:1600px){.shell{max-width:1920px;padding-inline:56px}}
+
+/* Errors and destructive actions use a clear, consistent red state. */
+.error-message{border-color:#fecaca;background:#fef2f2;color:#7f1d1d}
+.error-message .message-title{color:#991b1b}
+.error-message .body-text{color:#7f1d1d}
+.error-message .link-button,.form-error,.form-error .link-button{color:#b42318}
+.form-error{margin:8px 0 0;padding:10px 12px;border:1px solid #fecaca;border-radius:9px;background:#fef2f2;font-size:12px;line-height:1.55}
+.button-danger{background:#b42318;color:#fff}
+.button-danger:hover{background:#912018}
+.button-danger:focus-visible{outline:3px solid #fecaca;outline-offset:2px}

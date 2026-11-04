@@ -85,7 +85,7 @@
           <div class="field">
             <label class="field-label field-label-strong" for="flatId"
               >Flat</label
-            ><select
+            ><small class="field-hint">Choose an option.</small><select
               id="flatId"
               class="select-input"
               v-model="form.flatId"
@@ -104,7 +104,7 @@
           <div class="field">
             <label class="field-label field-label-strong" for="relationship"
               >Relationship</label
-            ><select
+            ><small class="field-hint">Choose an option.</small><select
               id="relationship"
               class="select-input"
               v-model="form.relationshipType"

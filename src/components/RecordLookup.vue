@@ -2,8 +2,8 @@
  <div class="field record-lookup">
   <label class="field-label field-label-strong" :for="name">{{ label }}{{ required ? ' (required)' : '' }}</label>
   <input v-if="!disabled" class="text-input lookup-search" type="search" v-model="search" :aria-label="'Search '+label" placeholder="Search by name or number"/>
-  <p v-if="currentOnly" class="field-hint">Only current, active records can be selected.</p>
-  <select :id="name" :name="name" class="select-input" :value="modelValue || ''" :required="required" :disabled="disabled || loading" @change="choose">
+  <p v-if="currentOnly" :id="`${name}-current-hint`" class="field-hint">Only current, active records can be selected.</p>
+  <small :id="`${name}-choice-hint`" class="field-hint">Choose a record from the available options.</small><select :id="name" :name="name" class="select-input" :value="modelValue || ''" :required="required" :disabled="disabled || loading" :aria-describedby="[currentOnly ? `${name}-current-hint` : '', `${name}-choice-hint`].filter(Boolean).join(' ')" @change="choose">
    <option value="">{{ required?'Choose a record':'None' }}</option>
    <option v-if="modelValue && !rows.some(r=>key(r)===modelValue)" :value="modelValue">{{ selectedLabel || 'Current selection' }}</option>
    <option v-for="row in rows" :key="key(row)" :value="key(row)" :disabled="currentOnly && !current(row)">{{ text(row) }}</option>
@@ -31,7 +31,7 @@ export default {
    try{
     const result=this.resource==='owners'?await api.owners({page:this.page,size:10,search:this.search,status:this.currentOnly?'CURRENT':undefined,signal:controller.signal}):await api.page(this.resource,this.page,{size:10,search:this.search,signal:controller.signal,status:this.currentOnly?'ACTIVE':undefined});
     if(controller.signal.aborted)return;this.rows=Array.isArray(result)?result:result.content;this.more=Array.isArray(result)?result.length===10:this.page+1<result.totalPages;
-    if(this.resource==='owners')await Promise.all([...new Set(this.rows.map(r=>r.flat_id))].map(async id=>{try{const flat=await api.flatLabel(id);this.flatNames[id]=flat.flatNumber;}catch{/* Choice remains usable when flat details are restricted. */}}));
+    if(this.resource==='owners')await Promise.all([...new Set(this.rows.map(r=>r.flat_id))].filter(id=>id&&!this.flatNames[id]).map(async id=>{try{const flat=await api.flatLabel(id);this.flatNames[id]=flat.flatNumber;}catch{/* Choice remains usable when flat details are restricted. */}}));
     if(!controller.signal.aborted)await this.resolveSelection();
    }catch(error){if(error.code!=='ERR_CANCELED')this.error=errorMessage(error);}finally{if(this.controller===controller)this.loading=false;}
   }

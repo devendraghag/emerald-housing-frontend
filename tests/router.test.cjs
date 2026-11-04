@@ -8,13 +8,13 @@ const { createSessionModule } = require('../src/store/session.cjs');
 function setup(auth, options) {
  const view={render:()=>null};
  const store=createStore({state:{society:{},floors:[1]},mutations:{referenceData(state,values){Object.assign(state,values);}},modules:{session:createSessionModule(auth,()=> 'Connection failed',options)}});
- const router=createRouter({history:createMemoryHistory(),routes:createRoutes(Object.fromEntries(['Home','Login','RecordList','RecordForm','Memberships','NotFound','OptionsPlayground'].map(name=>[name,view])))});
+ const router=createRouter({history:createMemoryHistory(),routes:createRoutes(Object.fromEntries(['Home','Login','RecordList','RecordForm','Memberships','NotFound'].map(name=>[name,view])))});
  router.beforeEach(createAuthGuard(store));
  return {store,router};
 }
 const admin={username:'admin',societyCode:'EMERALD',roles:['ADMIN'],permissions:['MEMBER_VIEW:SOCIETY','MEMBER_CREATE:SOCIETY','MEMBER_UPDATE:SOCIETY','FLAT_VIEW:SOCIETY','FLAT_CREATE:SOCIETY','FLAT_UPDATE:SOCIETY']};
 const guest={current:async()=>{throw {response:{status:401}};}};
-for(const path of ['/', '/members', '/flats', '/members/new', '/flats/new', '/members/7/edit', '/flats/9/edit', '/members/7/memberships', '/unknown', '/vue-options']) {
+for(const path of ['/', '/members', '/flats', '/members/new', '/flats/new', '/members/7/edit', '/flats/9/edit', '/members/7/memberships', '/unknown']) {
  test('direct guest access to '+path+' redirects to login',async()=>{
   const {router}=setup(guest);
   await router.push(path);
@@ -36,8 +36,6 @@ test('authenticated visitors leave login and can navigate workspace routes',asyn
  assert.equal(router.currentRoute.value.path,'/');
  await router.push('/flats');
  assert.equal(router.currentRoute.value.path,'/flats');
- await router.push('/vue-options');
- assert.equal(router.currentRoute.value.name,'vue-options');
 });
 test('permission routes refresh identity on navigation and reject an expired session',async()=>{
  let clock=0,calls=0;

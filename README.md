@@ -1,6 +1,6 @@
 # Emerald Housing frontend
 
-Vue 3 JavaScript frontend for the sibling emerald-housing backend. Follows the reference project's Options API, Vue Router, Vuex, Axios, reusable single-file components and an independent Emerald visual design.
+Vue 3 JavaScript frontend for the sibling emerald-housing backend. Uses Vue Router, Vuex, Axios, reusable single-file components and an independent Emerald visual design.
 
 ## Run
 
@@ -14,7 +14,15 @@ Open http://localhost:8083. Start the backend and its dependencies separately. T
 ```powershell
 npm.cmd test
 npm.cmd run build
+npm.cmd run build:budget
+npm.cmd run audit:dependencies
 ```
+
+`npm.cmd test` runs the local unit, form, accessibility, router, and API-client contract checks. `npm.cmd run build:budget` creates a production build and enforces budgets of 310 KiB for initial assets, 100 KiB for their combined gzip size, and 55 KiB per lazy JavaScript chunk. GitHub Actions runs both checks for pushes and pull requests. The budgets are guardrails for regressions; Lighthouse and real-user measurements are still needed to assess runtime performance.
+
+`npm.cmd run test:e2e:live` runs the end-to-end flows against the live local backend through the frontend. It requires the Docker Desktop Kubernetes context, a running gateway and services, provisioned admin credentials, and `jsdom` at `EMERALD_JSDOM_HOME` (or the temporary default path in `scripts/verify-live.cjs`). It uses uniquely identifiable records, then deactivates the synthetic family, ownership, member and flat records and disables the test account and role. If cleanup fails, the run is marked failed and reports the affected cleanup step. Use a disposable development environment; this live check is intentionally not part of CI.
+
+`npm.cmd run audit:dependencies` checks npm advisories. Dependabot opens weekly dependency update PRs. The current lockfile has known high and critical advisories, including direct Vue and Axios versions; the audit command currently exits nonzero. CI does not yet gate on this known baseline so existing checks remain usable. Review dependency upgrades separately, then add the audit command as a required CI check once the baseline is resolved.
 
 The dist folder contains the production build. Serve it with history fallback to index.html and reverse proxy /api to the gateway on the same origin.
 
@@ -38,7 +46,7 @@ Start the frontend in a separate terminal with npm.cmd run serve and open http:/
 
 ## Structure and versions
 
-- src/views: feature pages using Vue Options API.
+- src/views: feature pages for workspace workflows.
 - src/components: shared messages and form controls.
 - src/router: routes, page titles and history navigation.
 - src/store: shared society/floor data and success notices.
@@ -62,7 +70,7 @@ The overview loads actual member/flat totals and offers floor selection to view 
 - Axios provides one configured HTTP client, CSRF/session interceptors, promise responses, and cancellable directory/floor requests.
 - Vuex owns session state through the namespaced session module; actions restore/login/logout and mutations update state. Shared getters derive sorted floors without mutating the original array.
 - Router metadata and an asynchronous beforeEach guard protect workspace routes, preserve the requested destination, and redirect authenticated users away from login. The backend remains responsible for authorization.
-- Options API computed properties derive filtered records and 10-item pages. Methods handle events and async operations; created loads page data, beforeUnmount cancels requests and removes listeners, and watchers respond to route changes.
+- Computed properties derive filtered records and 10-item pages. Methods handle events and async operations; created loads page data, beforeUnmount cancels requests and removes listeners, and watchers respond to route changes.
 - ES modules, destructuring, spread syntax, template literals, async/await, Promise.all, Object.assign, Object.entries, and array map/filter/find/sort/slice/flatMap are used where needed.
 - Session state uses gateway cookies; passwords and session tokens are never persisted in browser storage.
 
@@ -83,10 +91,6 @@ All workspace routes declare meta.requiresAuth, while /login uses meta.guestOnly
 Permission-protected navigation revalidates effective account access; other session checks are cached for up to 60 seconds; API 401 responses still trigger immediate session expiry. Nested parent route protection is honored. Reference data is cleared when validation fails or the session expires. Router afterEach updates the page title only after successful navigation.
 
 Run npm.cmd test for integration tests using Vue Router memory history and the real Vuex session module. The backend must still enforce authentication and authorization for every API request.
-
-## Vue Options API playground
-
-Sign in and open **Vue Options API** in the sidebar or footer (/vue-options). Interactive examples use local state only. See [the feature coverage guide](docs/vue-options-api.md) for examples, source locations, version requirements and context-dependent features.
 
 ## Dynamic accounts, roles and family access
 

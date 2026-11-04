@@ -114,14 +114,22 @@ export default {
   created() {
     this.load();
   },
+  beforeUnmount() {
+    if (this.loadController) this.loadController.abort();
+  },
   methods: {
     async load() {
+      if (this.loadController) this.loadController.abort();
+      const controller = new AbortController();
+      this.loadController = controller;
       this.loading = true;
       this.error = '';
       try {
         const id = this.currentUser.memberId;
         if (id) {
-          this.profile = await api.get('members', id);
+          const profile = await api.get('members', id, { signal: controller.signal });
+          if (controller.signal.aborted) return;
+          this.profile = profile;
           this.form = {
             fullName: this.profile.fullName,
             mobileNumber: this.profile.mobileNumber,
@@ -129,9 +137,9 @@ export default {
           };
         }
       } catch (e) {
-        this.error = errorMessage(e);
+        if (e.code !== 'ERR_CANCELED' && !controller.signal.aborted) this.error = errorMessage(e);
       } finally {
-        this.loading = false;
+        if (this.loadController === controller) this.loading = false;
       }
     },
     async save() {
@@ -158,7 +166,7 @@ export default {
 </script>
 
 <style scoped lang="scss">
-.profile-page { max-width: 1050px; margin: 0 auto; }
+.profile-page { max-width: 1280px; margin: 0 auto; }
 .profile-heading { margin-bottom: 27px; }
 .profile-heading .page-title { margin-bottom: 8px; }
 .profile-layout { display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(310px, .95fr); gap: 20px; align-items: start; }
