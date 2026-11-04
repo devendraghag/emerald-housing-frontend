@@ -18,7 +18,7 @@
   },
   "devDependencies": {
     "@vue/cli-service": "4.5.19",
-    "@vue/compiler-sfc": "3.2.45",
+    "@vue/compiler-sfc": "3.5.44",
     "sass": "1.77.8",
     "sass-loader": "10.5.2"
   }
