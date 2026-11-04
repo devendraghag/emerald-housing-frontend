@@ -11,7 +11,7 @@
     "audit:dependencies": "npm audit --audit-level=high"
   },
   "dependencies": {
-    "axios": "1.7.9",
+    "axios": "1.21.0",
     "vue": "3.2.45",
     "vue-router": "4.1.6",
     "vuex": "4.1.0"
