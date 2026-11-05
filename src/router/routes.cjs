@@ -1,9 +1,10 @@
-function createRoutes({Home,Login,RecordList,RecordForm,Memberships,NotFound,CommunityManagement=NotFound,RentalManagement=NotFound,SocietyManagement=NotFound,AccountSecurity=NotFound,Profile=NotFound,LostFound=NotFound,Forbidden=NotFound}) {
+function createRoutes({Home,Login,RecordList,RecordForm,Memberships,NotFound,CommunityManagement=NotFound,RentalManagement=NotFound,SocietyManagement=NotFound,AccountSecurity=NotFound,Profile=NotFound,LostFound=NotFound,Forbidden=NotFound,HousingAssistant=NotFound}) {
   const read=type=>type==='members'?['MEMBER_VIEW:SOCIETY','MEMBER_VIEW:SELF']:['FLAT_VIEW:SOCIETY','FLAT_VIEW:OWN_FLATS'];
   return [
     {path:'/login',name:'login',component:Login,meta:{title:'Sign in',guestOnly:true}},
     {path:'/',component:Home,meta:{requiresAuth:true,title:'Overview'}},
     {path:'/account-security',component:AccountSecurity,meta:{requiresAuth:true,title:'Account security'}},
+    {path:'/assistant',component:HousingAssistant,meta:{requiresAuth:true,title:'Housing FAQ Assistant'}},
     {path:'/building',component:SocietyManagement,meta:{requiresAuth:true,title:'Society & floors',permissions:['SOCIETY_VIEW:SOCIETY']}},
     {path:'/rental',component:RentalManagement,meta:{requiresAuth:true,title:'Rental operations',permissions:['RENT_VIEW:SOCIETY','RENT_VIEW:OWN_FLATS','RENT_MANAGE:SOCIETY','RENT_MANAGE:OWN_FLATS','MAINTENANCE_VIEW:SOCIETY','MAINTENANCE_VIEW:OWN_FLATS','MAINTENANCE_CREATE:SOCIETY','MAINTENANCE_CREATE:OWN_FLATS','LEASE_VIEW:SOCIETY','LEASE_VIEW:OWN_FLATS','LEASE_MANAGE:SOCIETY','LEASE_MANAGE:OWN_FLATS','VIEWING_VIEW:SOCIETY','VIEWING_VIEW:OWN_FLATS','VIEWING_BOOK:SOCIETY','VIEWING_BOOK:OWN_FLATS','VIEWING_MANAGE:SOCIETY','VIEWING_MANAGE:OWN_FLATS']}},
     {path:'/access-denied',name:'access-denied',component:Forbidden,meta:{requiresAuth:true,title:'Access restricted'}},

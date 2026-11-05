@@ -10,6 +10,7 @@ const AccountSecurity = () => import('../views/AccountSecurity.vue');
 const Profile = () => import('../views/Profile.vue');
 const LostFound = () => import('../views/LostFound.vue');
 const Forbidden = () => import('../views/Forbidden.vue');
+const HousingAssistant = () => import('../views/HousingAssistant.vue');
 const Login = () => import("../views/Login.vue");
 const RecordList = () => import("../views/RecordList.vue");
 const RecordForm = () => import("../views/RecordForm.vue");
@@ -18,7 +19,7 @@ const NotFound = () => import("../views/NotFound.vue");
 const router = createRouter({
   history: createWebHistory(),
   scrollBehavior: () => ({ top: 0 }),
-  routes: createRoutes({ Home, Login, RecordList, RecordForm, Memberships, NotFound, CommunityManagement, RentalManagement, SocietyManagement, AccountSecurity, Profile, LostFound, Forbidden }),
+  routes: createRoutes({ Home, Login, RecordList, RecordForm, Memberships, NotFound, CommunityManagement, RentalManagement, SocietyManagement, AccountSecurity, Profile, LostFound, Forbidden, HousingAssistant }),
 });
 router.beforeEach(createAuthGuard(store));
 router.afterEach((to, from, failure) => {
